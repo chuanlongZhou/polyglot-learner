@@ -1,35 +1,28 @@
 <template>
-  <v-card
-    @click="handleCardClick"
-    class="simple-card"
-    :class="{ 'flipped': isFlipped }"
-    elevation="8"
-  >
-    <v-card-text class="text-center pa-8">
-      <div v-if="!isFlipped" class="front-content">
+  <div class="card-container" @click="handleCardClick">
+    <v-card
+      class="simple-card"
+      :class="{ 'flipped': isFlipped }"
+      elevation="8"
+    >
+      <v-card-text class="text-center pa-8 front-content">
         <div class="text-h4 mb-4">{{ word.text_src }}</div>
-        <div class="text-h6 text-grey">
-          {{ getLanguageDisplayName(word.lang_src) }}
-        </div>
-      </div>
+      </v-card-text>
       
-      <div v-else class="back-content">
+      <v-card-text class="text-center pa-8 back-content">
         <div class="text-h4 mb-4">{{ word.text_tgt }}</div>
-        <div class="text-h6 text-grey mb-4">
-          {{ getLanguageDisplayName(word.lang_tgt) }}
-        </div>
         
         <div v-if="word.notes" class="text-body-1 mt-4 pa-4 bg-grey-lighten-4 rounded">
           <v-icon left>mdi-note-text</v-icon>
           {{ word.notes }}
         </div>
-      </div>
-    </v-card-text>
-  </v-card>
+      </v-card-text>
+    </v-card>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { getLanguageDisplayName } from '@/utils/normalize';
 import type { WordItem } from '@/types';
@@ -66,14 +59,18 @@ watch(() => props.word.id, () => {
 </script>
 
 <style scoped>
-.simple-card {
+.card-container {
   cursor: pointer;
+  perspective: 1000px;
+  min-height: 200px;
+}
+
+.simple-card {
   transition: transform 0.6s;
   transform-style: preserve-3d;
   min-height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
+  width: 100%;
 }
 
 .simple-card.flipped {
@@ -83,18 +80,25 @@ watch(() => props.word.id, () => {
 .front-content,
 .back-content {
   backface-visibility: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .back-content {
   transform: rotateY(180deg);
 }
 
-.simple-card:hover {
+.card-container:hover .simple-card {
   transform: scale(1.02);
 }
 
-.simple-card.flipped:hover {
+.card-container:hover .simple-card.flipped {
   transform: rotateY(180deg) scale(1.02);
 }
 </style>

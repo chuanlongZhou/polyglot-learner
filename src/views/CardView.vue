@@ -146,21 +146,22 @@ import type { WordItem } from '@/types';
 const wordsStore = useWordsStore();
 const settingsStore = useSettingsStore();
 
-// Local state
-const frontLanguage = ref('en');
-const backLanguage = ref('fr');
+// Local state - will be set based on available languages
+const frontLanguage = ref('');
+const backLanguage = ref('');
 const cardMode = ref<'single' | 'multiple'>('single');
 const cardsPerPage = ref(4);
 const currentIndex = ref(0);
 const shuffledWords = ref<WordItem[]>([]);
 
-// Options
-const languageOptions = computed(() => 
-  Object.entries(LANGUAGE_NAMES).map(([code, name]) => ({
-    title: name,
+// Options - only show languages that are actually present in the CSV data
+const languageOptions = computed(() => {
+  const availableLanguages = Object.keys(wordsStore.languageDistribution);
+  return availableLanguages.map(code => ({
+    title: getLanguageDisplayName(code),
     value: code,
-  }))
-);
+  }));
+});
 
 const cardModeOptions = [
   { title: 'Single Card', value: 'single' },
@@ -194,6 +195,21 @@ const visibleWords = computed(() => {
 });
 
 // Methods
+function setDefaultLanguages() {
+  const availableLanguages = Object.keys(wordsStore.languageDistribution);
+  if (availableLanguages.length > 0) {
+    // Set first available language as front language if not set
+    if (!frontLanguage.value || !availableLanguages.includes(frontLanguage.value)) {
+      frontLanguage.value = availableLanguages[0];
+    }
+    
+    // Set second available language as back language if not set
+    if (!backLanguage.value || !availableLanguages.includes(backLanguage.value)) {
+      backLanguage.value = availableLanguages.length > 1 ? availableLanguages[1] : availableLanguages[0];
+    }
+  }
+}
+
 function updateFilteredWords() {
   shuffledWords.value = [...filteredWords.value];
   currentIndex.value = 0;
@@ -242,6 +258,7 @@ function handleKeydown(event: KeyboardEvent) {
 onMounted(async () => {
   await wordsStore.restore();
   await settingsStore.loadSettings();
+  setDefaultLanguages();
   updateFilteredWords();
   
   // Add keyboard event listener
@@ -256,6 +273,12 @@ onUnmounted(() => {
 watch(filteredWords, () => {
   updateFilteredWords();
 });
+
+// Watch for language distribution changes to update default languages
+watch(() => wordsStore.languageDistribution, () => {
+  setDefaultLanguages();
+  updateFilteredWords();
+}, { deep: true });
 </script>
 
 <style scoped>
