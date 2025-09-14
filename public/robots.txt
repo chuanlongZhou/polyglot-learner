@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://polyglot-learner.netlify.app/sitemap.xml
+
+# Crawl delay (optional)
+Crawl-delay: 1
+
+# Allow all search engines to index the site
+Disallow:
+
+# Allow access to all pages
+Allow: /about
+Allow: /cards
+Allow: /quiz
+Allow: /stats
+Allow: /list
