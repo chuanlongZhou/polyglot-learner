@@ -118,7 +118,8 @@ export const useQueueStore = defineStore('queue', () => {
     
     const wordsStore = useWordsStore();
     const nextId = ids.value[0];
-    return wordsStore.items.find(item => item.id === nextId) || null;
+    const allItems = wordsStore.getAllItems();
+    return allItems.find(item => item.id === nextId) || null;
   }
 
   function getRandomItem(): WordItem | null {
@@ -126,7 +127,8 @@ export const useQueueStore = defineStore('queue', () => {
     
     const wordsStore = useWordsStore();
     const randomId = ids.value[Math.floor(Math.random() * ids.value.length)];
-    return wordsStore.items.find(item => item.id === randomId) || null;
+    const allItems = wordsStore.getAllItems();
+    return allItems.find(item => item.id === randomId) || null;
   }
 
   function shuffle(): void {

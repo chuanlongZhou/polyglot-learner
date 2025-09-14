@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { SettingsState, TtsProvider, VoiceInfo } from '@/types';
+import type { SettingsState, TtsProvider, VoiceInfo, QuizConfig } from '@/types';
 import { saveSettings as saveSettingsToIdb, loadSettings as loadSettingsFromIdb } from '@/utils/idb';
 import { createTtsEngine, getAvailableProviders, isWebSpeechAvailable } from '@/utils/tts';
 
@@ -11,6 +11,7 @@ export const useSettingsStore = defineStore('settings', () => {
   // State
   const ttsProvider = ref<TtsProvider>('WebSpeech');
   const webVoices = ref<Record<string, string>>({}); // lang -> voiceId
+  const lastQuizConfig = ref<QuizConfig | null>(null);
   const loading = ref(false);
   const error = ref<string | null>(null);
 
@@ -44,6 +45,10 @@ export const useSettingsStore = defineStore('settings', () => {
       if (savedSettings.webVoices) {
         webVoices.value = savedSettings.webVoices;
       }
+      
+      if (savedSettings.lastQuizConfig) {
+        lastQuizConfig.value = savedSettings.lastQuizConfig;
+      }
     } catch (err) {
       console.error('Failed to load settings:', err);
       error.value = err instanceof Error ? err.message : 'Failed to load settings';
@@ -59,6 +64,7 @@ export const useSettingsStore = defineStore('settings', () => {
         ttsProvider: ttsProvider.value,
         webVoices: { ...webVoices.value }, // Create a copy to ensure it's plain
         google: { apiKey: '' }, // Keep empty for compatibility
+        lastQuizConfig: lastQuizConfig.value ? { ...lastQuizConfig.value } : undefined,
       };
       
       console.log('[DEBUG] Saving settings:', settings);
@@ -143,7 +149,7 @@ export const useSettingsStore = defineStore('settings', () => {
       const selectedVoiceId = voiceId || getWebVoiceForLanguage(lang);
       console.log(`[DEBUG] Speaking "${text}" in ${lang} with voice:`, selectedVoiceId);
       
-      await currentTtsEngine.value.speak(text, lang, selectedVoiceId);
+      await currentTtsEngine.value.speak(text, lang, selectedVoiceId || undefined);
     } catch (err) {
       console.error('Failed to speak text:', err);
       throw new Error(`TTS error: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -160,9 +166,19 @@ export const useSettingsStore = defineStore('settings', () => {
     error.value = null;
   }
 
+  function setLastQuizConfig(config: QuizConfig): void {
+    lastQuizConfig.value = { ...config };
+    saveSettings();
+  }
+
+  function getLastQuizConfig(): QuizConfig | null {
+    return lastQuizConfig.value ? { ...lastQuizConfig.value } : null;
+  }
+
   function reset(): void {
     ttsProvider.value = 'WebSpeech';
     webVoices.value = {};
+    lastQuizConfig.value = null;
     error.value = null;
   }
 
@@ -170,6 +186,7 @@ export const useSettingsStore = defineStore('settings', () => {
     // State (only serializable data)
     ttsProvider,
     webVoices,
+    lastQuizConfig,
     loading,
     error,
     
@@ -188,6 +205,8 @@ export const useSettingsStore = defineStore('settings', () => {
     speakText,
     cancelSpeech,
     clearError,
+    setLastQuizConfig,
+    getLastQuizConfig,
     reset,
   };
 });

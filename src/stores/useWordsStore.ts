@@ -147,6 +147,7 @@ export const useWordsStore = defineStore('words', () => {
           [item.lang_tgt]: item.text_tgt,
         },
         times: item.times,
+        learned: 0, // Default value for legacy items
         errors: item.errors,
         last_review: item.last_review,
         spell_errors: item.spell_errors,
@@ -162,11 +163,21 @@ export const useWordsStore = defineStore('words', () => {
     const baseId = id.split('_')[0];
     const row = rows.value.find(row => row.id === baseId);
     if (row) {
-      if (patch.times !== undefined) row.times = patch.times;
+      if (patch.times !== undefined) {
+        row.times = patch.times;
+        // Update learned count based on times
+        if (patch.times > 0) {
+          row.learned = Math.max(row.learned, 1);
+        }
+      }
       if (patch.errors !== undefined) row.errors = patch.errors;
       if (patch.last_review !== undefined) row.last_review = patch.last_review;
       if (patch.spell_errors !== undefined) row.spell_errors = patch.spell_errors;
       if (patch.notes !== undefined) row.notes = patch.notes;
+      if (patch.stars !== undefined) {
+        const newStars = isNaN(patch.stars) ? 0 : patch.stars;
+        row.stars = newStars;
+      }
       dirty.value = true;
       persist().catch(err => {
         console.error('Failed to persist after updating item:', err);
@@ -181,7 +192,7 @@ export const useWordsStore = defineStore('words', () => {
 
   function bulkAddItems(newItems: WordItem[]): void {
     newItems.forEach(item => {
-      items.value.push(item);
+      addItem(item);
     });
     dirty.value = true;
     // Only persist once for the entire batch
@@ -197,7 +208,8 @@ export const useWordsStore = defineStore('words', () => {
   }
 
   function filtered(filters: Filters): WordItem[] {
-    let filtered = [...items.value];
+    const allItems = getAllItems();
+    let filtered = [...allItems];
 
     // Language filters
     if (filters.languages.src.length > 0) {
@@ -241,11 +253,13 @@ export const useWordsStore = defineStore('words', () => {
   }
 
   function getSortedByPriority(): WordItem[] {
-    return sortByLearningPriority(items.value);
+    const allItems = getAllItems();
+    return sortByLearningPriority(allItems);
   }
 
   function getWordsNeedingReview(daysThreshold: number = 7): WordItem[] {
-    return items.value.filter(item => {
+    const allItems = getAllItems();
+    return allItems.filter(item => {
       if (item.times === 0) return true; // Never studied
       if (item.errors > 0) return true; // Has errors
       
@@ -285,6 +299,7 @@ export const useWordsStore = defineStore('words', () => {
                 last_review: row.last_review,
                 spell_errors: row.spell_errors,
                 notes: row.notes,
+                stars: row.stars,
               });
             }
           }
@@ -320,6 +335,7 @@ export const useWordsStore = defineStore('words', () => {
             id: baseId,
             words: {},
             times: wordItem.times,
+            learned: 0, // Default value for legacy items
             errors: wordItem.errors,
             last_review: wordItem.last_review,
             spell_errors: wordItem.spell_errors,

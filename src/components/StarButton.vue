@@ -2,12 +2,12 @@
   <v-btn
     @click="handleClick"
     icon
-    size="small"
+    size="large"
     :color="starColor"
     variant="text"
     :class="{ 'star-filled': stars > 0 }"
   >
-    <v-icon>{{ starIcon }}</v-icon>
+    <v-icon size="large">{{ starIcon }}</v-icon>
   </v-btn>
 </template>
 
@@ -27,12 +27,14 @@ const emit = defineEmits<Emits>();
 
 // Star icon based on value
 const starIcon = computed(() => {
-  return props.stars > 0 ? 'mdi-star' : 'mdi-star-outline';
+  const stars = isNaN(props.stars) ? 0 : props.stars;
+  return stars > 0 ? 'mdi-star' : 'mdi-star-outline';
 });
 
 // Star color based on value
 const starColor = computed(() => {
-  switch (props.stars) {
+  const stars = isNaN(props.stars) ? 0 : props.stars;
+  switch (stars) {
     case 0:
       return 'grey-lighten-1'; // No fill - light grey
     case 1:
@@ -52,7 +54,8 @@ const starColor = computed(() => {
 
 // Handle click - cycle through 0-5
 function handleClick() {
-  const newValue = props.stars >= 5 ? 0 : props.stars + 1;
+  const currentStars = isNaN(props.stars) ? 0 : props.stars;
+  const newValue = currentStars >= 5 ? 0 : currentStars + 1;
   emit('update:stars', newValue);
 }
 </script>
@@ -61,4 +64,14 @@ function handleClick() {
 .star-filled {
   font-weight: bold;
 }
+
+.v-btn {
+  min-width: 48px !important;
+  height: 48px !important;
+}
+
+.v-icon {
+  font-size: 28px !important;
+}
 </style>
+

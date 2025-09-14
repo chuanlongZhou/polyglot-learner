@@ -30,6 +30,17 @@
             >
               Export CSV
             </v-btn>
+            
+            <v-spacer></v-spacer>
+            
+            <v-btn
+              @click="downloadExampleCsv"
+              color="info"
+              prepend-icon="mdi-file-download"
+              variant="outlined"
+            >
+              Download Example
+            </v-btn>
           </div>
         </v-card-text>
       </v-card>
@@ -103,7 +114,7 @@
             show-select
             class="word-table"
             :class="{ 'table-compact': windowWidth < 1200 }"
-            :disable-sort="false"
+            :disable-sort="true"
             :disable-filter="false"
           >
             <!-- Dynamic Language Columns -->
@@ -117,7 +128,7 @@
                 variant="outlined"
                 hide-details
                 :tabindex="index + 1"
-                autofocus="false"
+                :autofocus="false"
                 @keyup.enter="handleEnterKey"
                 @keyup.escape="handleEscapeKey"
                 :hint="canAddWord ? 'Press Enter to add word' : 'Fill at least 2 languages'"
@@ -171,6 +182,14 @@
                   @update:stars="updateStars(item.id, $event)"
                 />
               </div>
+            </template>
+            
+            <!-- Learned Column -->
+            <template #item.learned="{ item }">
+              <!-- Input row -->
+              <span v-if="item.id === 'input-row'" class="text-grey">-</span>
+              <!-- Regular row -->
+              <span v-else>{{ item.learned }}</span>
             </template>
             
             <!-- Notes Column -->
@@ -339,6 +358,8 @@ const sortOptions = computed(() => {
   return [
     { title: 'Stars (Highest First)', value: '-stars' },
     { title: 'Stars (Lowest First)', value: 'stars' },
+    { title: 'Learned (Most First)', value: '-learned' },
+    { title: 'Learned (Least First)', value: 'learned' },
     { title: 'Last Review (Oldest First)', value: 'last_review' },
     { title: 'Last Review (Newest First)', value: '-last_review' },
     { title: 'Errors (Most First)', value: '-errors' },
@@ -393,6 +414,7 @@ const filteredWords = computed(() => {
   let words = wordsStore.rows.map(row => ({
     id: row.id,
     wordRow: row,
+    learned: row.learned,
     errors: row.errors,
     last_review: row.last_review,
     notes: row.notes,
@@ -421,12 +443,12 @@ const filteredWords = computed(() => {
     
     switch (sortBy.value) {
       case 'stars':
-        aValue = a.wordRow.stars;
-        bValue = b.wordRow.stars;
+        aValue = Number(a.wordRow.stars) || 0;
+        bValue = Number(b.wordRow.stars) || 0;
         break;
       case '-stars':
-        aValue = b.wordRow.stars;
-        bValue = a.wordRow.stars;
+        aValue = Number(b.wordRow.stars) || 0;
+        bValue = Number(a.wordRow.stars) || 0;
         break;
       case 'last_review':
         aValue = a.last_review && a.last_review.trim() ? new Date(a.last_review).getTime() : 0;
@@ -435,6 +457,14 @@ const filteredWords = computed(() => {
       case '-last_review':
         aValue = b.last_review && b.last_review.trim() ? new Date(b.last_review).getTime() : 0;
         bValue = a.last_review && a.last_review.trim() ? new Date(a.last_review).getTime() : 0;
+        break;
+      case 'learned':
+        aValue = a.learned;
+        bValue = b.learned;
+        break;
+      case '-learned':
+        aValue = b.learned;
+        bValue = a.learned;
         break;
       case 'errors':
         aValue = a.errors;
@@ -464,7 +494,19 @@ const filteredWords = computed(() => {
   // Always add input row at the top
   const inputRow: GroupedWord = {
     id: 'input-row',
-    words: [],
+    wordRow: {
+      id: 'input-row',
+      words: {},
+      times: 0,
+      learned: 0,
+      errors: 0,
+      last_review: '',
+      spell_errors: 0,
+      notes: '',
+      stars: 0,
+      progress: {},
+    },
+    learned: 0,
     errors: 0,
     last_review: '',
     notes: '',
@@ -513,6 +555,7 @@ const headers = computed(() => {
   return [
     ...languageHeaders,
     { title: 'Stars', key: 'stars', sortable: true },
+    { title: 'Learned', key: 'learned', sortable: true },
     { title: 'Errors', key: 'errors', sortable: true },
     { title: 'Last Review', key: 'last_review', sortable: true },
     { title: 'Notes', key: 'notes', sortable: false },
@@ -606,13 +649,8 @@ function startEditNotes(item: GroupedWord) {
 
 function saveNotes(id: string) {
   if (editingNotes.value === id) {
-    // Update notes for all words in the group
-    const groupedWord = filteredWords.value.find(gw => gw.id === id);
-    if (groupedWord) {
-      groupedWord.words.forEach(word => {
-        wordsStore.updateItem(word.id, { notes: editingNotesText.value });
-      });
-    }
+    // Update notes for the word row
+    wordsStore.updateRow(id, { notes: editingNotesText.value });
     editingNotes.value = null;
     editingNotesText.value = '';
   }
@@ -677,6 +715,7 @@ function addNewWord() {
     id: `word_${Date.now()}`,
     words: {},
     times: 0,
+    learned: 0,
     errors: 0,
     last_review: new Date().toISOString(), // Set to current date and time
     spell_errors: 0,
@@ -717,13 +756,14 @@ function exportToCsv() {
   const languages = Array.from(allLanguages).sort();
   
   // Create CSV headers
-  const headers = ['id', ...languages.map(lang => `word_${lang}`), 'times', 'errors', 'last_review', 'spell_errors', 'notes', 'stars'];
+  const headers = ['id', ...languages.map(lang => `word_${lang}`), 'times', 'learned', 'errors', 'last_review', 'spell_errors', 'notes', 'stars'];
   
   // Create CSV rows
   const rows = wordsStore.rows.map(row => {
     const csvRow: { [key: string]: string } = {
       id: row.id,
       times: row.times.toString(),
+      learned: row.learned.toString(),
       errors: row.errors.toString(),
       last_review: row.last_review && row.last_review.trim() ? row.last_review : '',
       spell_errors: row.spell_errors.toString(),
@@ -761,6 +801,34 @@ function exportToCsv() {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+}
+
+// Download example CSV functionality
+async function downloadExampleCsv() {
+  try {
+    // Fetch the example_words.csv file from the public directory
+    const response = await fetch('/example_words.csv');
+    if (!response.ok) {
+      throw new Error('Failed to fetch example file');
+    }
+    
+    const csvContent = await response.text();
+    
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'example_words.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error downloading example CSV:', error);
+    alert('Failed to download example file. Please try again.');
+  }
 }
 
 // Initialize

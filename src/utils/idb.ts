@@ -10,6 +10,7 @@ const STORAGE_KEYS = {
   SETTINGS: 'polyglot_settings',
   QUEUE: 'polyglot_queue',
   LAST_EXPORT: 'polyglot_last_export',
+  QUIZ_ERRORS: 'polyglot_quiz_errors',
 } as const;
 
 /**
@@ -29,6 +30,7 @@ export async function saveWords(words: WordItem[]): Promise<void> {
       last_review: word.last_review ? String(word.last_review) : undefined,
       spell_errors: Number(word.spell_errors),
       notes: word.notes ? String(word.notes) : undefined,
+      stars: Number(word.stars),
     }));
     
     await set(STORAGE_KEYS.WORDS, plainWords);
@@ -136,6 +138,42 @@ export async function loadLastExport(): Promise<string | null> {
   } catch (error) {
     console.error('Failed to load last export timestamp:', error);
     return null;
+  }
+}
+
+/**
+ * Save quiz errors to IndexedDB
+ */
+export async function saveQuizErrors(errors: Array<{
+  question: string;
+  correctAnswer: string;
+  userAnswer: string;
+  timestamp: string;
+}>): Promise<void> {
+  try {
+    await set(STORAGE_KEYS.QUIZ_ERRORS, errors);
+    console.log(`Saved ${errors.length} quiz errors to IndexedDB`);
+  } catch (error) {
+    console.error('Failed to save quiz errors to IndexedDB:', error);
+    throw new Error('Failed to save quiz errors');
+  }
+}
+
+/**
+ * Load quiz errors from IndexedDB
+ */
+export async function loadQuizErrors(): Promise<Array<{
+  question: string;
+  correctAnswer: string;
+  userAnswer: string;
+  timestamp: string;
+}>> {
+  try {
+    const errors = await get(STORAGE_KEYS.QUIZ_ERRORS);
+    return errors || [];
+  } catch (error) {
+    console.error('Failed to load quiz errors from IndexedDB:', error);
+    return [];
   }
 }
 

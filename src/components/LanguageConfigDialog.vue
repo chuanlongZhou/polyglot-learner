@@ -180,6 +180,7 @@ const config = ref<LanguageConfig>({
   sourceLanguage: '',
   targetLanguage: '',
   availableLanguages: [],
+  displayLanguages: [],
 });
 
 // Computed

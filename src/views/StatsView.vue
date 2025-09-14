@@ -1,331 +1,258 @@
 <template>
   <div class="stats-view-container">
     <v-container fluid>
-      <!-- Overview Cards -->
-      <v-row class="mb-4">
-      <v-col cols="12" md="3">
-        <v-card>
-          <v-card-text class="text-center">
-            <v-icon size="48" color="primary">mdi-book</v-icon>
-            <div class="text-h4 mt-2">{{ wordsStore.totalWords }}</div>
-            <div class="text-body-2 text-grey">Total Words</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      
-      <v-col cols="12" md="3">
-        <v-card>
-          <v-card-text class="text-center">
-            <v-icon size="48" color="success">mdi-check-circle</v-icon>
-            <div class="text-h4 mt-2">{{ wordsStore.learnedWords }}</div>
-            <div class="text-body-2 text-grey">Learned</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      
-      <v-col cols="12" md="3">
-        <v-card>
-          <v-card-text class="text-center">
-            <v-icon size="48" color="warning">mdi-alert-circle</v-icon>
-            <div class="text-h4 mt-2">{{ Math.round(wordsStore.errorRate) }}%</div>
-            <div class="text-body-2 text-grey">Error Rate</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      
-      <v-col cols="12" md="3">
-        <v-card>
-          <v-card-text class="text-center">
-            <v-icon size="48" color="info">mdi-trending-up</v-icon>
-            <div class="text-h4 mt-2">{{ learningProgress }}%</div>
-            <div class="text-body-2 text-grey">Progress</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+      <!-- Simple Overview Cards -->
+      <v-row class="mb-6">
+        <v-col cols="12" sm="6" md="3">
+          <v-card class="stats-card" elevation="3">
+            <v-card-text class="text-center pa-6">
+              <v-icon size="64" color="primary">mdi-book</v-icon>
+              <div class="text-h3 mt-3 font-weight-bold">{{ totalWords }}</div>
+              <div class="text-h6 text-grey">Total Words</div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        
+        <v-col cols="12" sm="6" md="3">
+          <v-card class="stats-card" elevation="3">
+            <v-card-text class="text-center pa-6">
+              <v-icon size="64" color="warning">mdi-alert-circle</v-icon>
+              <div class="text-h3 mt-3 font-weight-bold">{{ Math.round(errorRate) }}%</div>
+              <div class="text-h6 text-grey">Error Rate</div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        
+        <v-col cols="12" sm="6" md="3">
+          <v-card class="stats-card" elevation="3">
+            <v-card-text class="text-center pa-6">
+              <v-icon size="64" color="teal">mdi-calendar-today</v-icon>
+              <div class="text-h3 mt-3 font-weight-bold">{{ practicedToday }}</div>
+              <div class="text-h6 text-grey">Practiced Today</div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        
+        <v-col cols="12" sm="6" md="3">
+          <v-card class="stats-card" elevation="3">
+            <v-card-text class="text-center pa-6">
+              <v-icon size="64" color="success">mdi-trophy</v-icon>
+              <div class="text-h3 mt-3 font-weight-bold">{{ masteredWords }}</div>
+              <div class="text-h6 text-grey">Mastered</div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
 
-    <!-- Charts -->
-    <v-row>
-      <v-col cols="12" md="6">
-        <v-card>
-          <v-card-title>
-            <v-icon left>mdi-chart-pie</v-icon>
-            Language Distribution
-          </v-card-title>
-          <v-card-text>
-            <div ref="languageChart" style="height: 300px;"></div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      
-      <v-col cols="12" md="6">
-        <v-card>
-          <v-card-title>
-            <v-icon left>mdi-chart-bar</v-icon>
-            Learning Progress
-          </v-card-title>
-          <v-card-text>
-            <div ref="progressChart" style="height: 300px;"></div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+      <!-- Today's Quiz Errors -->
+      <v-row class="mt-4">
+        <v-col cols="12">
+          <v-card class="elevation-3">
+            <v-card-title class="d-flex align-center">
+              <v-icon left color="error">mdi-alert-circle</v-icon>
+              Today's Quiz Errors
+              <v-spacer />
+              <v-chip 
+                v-if="todaysQuizErrors.length > 0"
+                color="error" 
+                variant="outlined"
+                size="small"
+              >
+                {{ todaysQuizErrors.length }} Errors
+              </v-chip>
+              <v-chip 
+                v-else
+                color="success" 
+                variant="outlined"
+                size="small"
+              >
+                No Errors Today!
+              </v-chip>
+              <v-progress-circular
+                v-if="loading"
+                indeterminate
+                size="20"
+                width="2"
+                color="primary"
+                class="ml-2"
+              />
+            </v-card-title>
+            <v-card-text>
+              <div v-if="todaysQuizErrors.length === 0" class="text-center pa-8">
+                <v-icon size="64" color="success" class="mb-4">mdi-check-circle</v-icon>
+                <div class="text-h6">Great job! No quiz errors today.</div>
+                <div class="text-body-2 text-grey mt-2">Keep up the good work!</div>
+              </div>
+              <div v-else>
+                <v-list>
+                  <v-list-item
+                    v-for="(error, index) in todaysQuizErrors"
+                    :key="index"
+                    class="error-item"
+                  >
+                    <template #prepend>
+                      <v-icon color="error" size="small">mdi-close-circle</v-icon>
+                    </template>
+                    
+                    <v-list-item-title class="font-weight-medium">
+                      {{ error.question }} → {{ error.correctAnswer }}
+                    </v-list-item-title>
+                    
+                    <v-list-item-subtitle class="text-error">
+                      <strong>Your answer:</strong> {{ error.userAnswer === 'SKIPPED' ? 'Skipped' : error.userAnswer }}
+                    </v-list-item-subtitle>
+                    
+                    <template #append>
+                      <div class="d-flex align-center">
+                        <StarButton
+                          :stars="getWordStars(error.question, error.correctAnswer)"
+                          @update:stars="(newStars) => updateWordStars(error.question, error.correctAnswer, newStars)"
+                          size="small"
+                        />
+                        <v-chip size="small" color="grey" variant="outlined" class="ml-2">
+                          {{ formatTime(error.timestamp) }}
+                        </v-chip>
+                      </div>
+                    </template>
+                  </v-list-item>
+                </v-list>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
 
-    <!-- Detailed Stats -->
-    <v-row class="mt-4">
-      <v-col cols="12">
-        <v-card>
-          <v-card-title>
-            <v-icon left>mdi-chart-line</v-icon>
-            Detailed Statistics
-          </v-card-title>
-          <v-card-text>
-            <v-data-table
-              :headers="statsHeaders"
-              :items="detailedStats"
-              :loading="loading"
-              class="elevation-1"
-            >
-              <template #item.language="{ item }">
-                <v-chip :color="getLanguageColor(item.language)">
-                  {{ getLanguageDisplayName(item.language) }}
-                </v-chip>
-              </template>
-              
-              <template #item.progress="{ item }">
-                <v-progress-linear
-                  :model-value="item.progress"
-                  color="primary"
-                  height="8"
-                  rounded
-                />
-                <div class="text-caption text-center mt-1">
-                  {{ item.progress }}%
-                </div>
-              </template>
-            </v-data-table>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <!-- Export Section -->
-    <v-row class="mt-4">
-      <v-col cols="12">
-        <v-card>
-          <v-card-title>
-            <v-icon left>mdi-download</v-icon>
-            Export Data
-          </v-card-title>
-          <v-card-text>
-            <v-row>
-              <v-col cols="12" md="6">
-                <v-btn
-                  @click="exportCsv"
-                  color="primary"
-                  prepend-icon="mdi-file-excel"
-                  block
-                >
-                  Export Words as CSV
-                </v-btn>
-              </v-col>
-              
-              <v-col cols="12" md="6">
-                <v-btn
-                  @click="exportStats"
-                  color="secondary"
-                  prepend-icon="mdi-chart-box"
-                  block
-                >
-                  Export Statistics
-                </v-btn>
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+      <!-- Simple Actions -->
+      <v-row class="mt-4">
+        <v-col cols="12">
+          <v-card class="elevation-3">
+            <v-card-title class="d-flex align-center">
+              <v-icon left color="primary">mdi-cog</v-icon>
+              Actions
+            </v-card-title>
+            <v-card-text>
+              <v-row>
+                <v-col cols="12" sm="6" md="3">
+                  <v-btn
+                    @click="exportCsv"
+                    color="primary"
+                    prepend-icon="mdi-download"
+                    block
+                    variant="outlined"
+                  >
+                    Export CSV
+                  </v-btn>
+                </v-col>
+                
+                <v-col cols="12" sm="6" md="3">
+                  <v-btn
+                    @click="clearTodaysErrors"
+                    color="warning"
+                    prepend-icon="mdi-delete"
+                    block
+                    variant="outlined"
+                  >
+                    Clear Today's Errors
+                  </v-btn>
+                </v-col>
+                
+                <v-col cols="12" sm="6" md="3">
+                  <v-btn
+                    @click="refreshStats"
+                    color="info"
+                    prepend-icon="mdi-refresh"
+                    block
+                    variant="outlined"
+                  >
+                    Refresh
+                  </v-btn>
+                </v-col>
+                
+                <v-col cols="12" sm="6" md="3">
+                  <v-btn
+                    @click="clearAllProgress"
+                    color="error"
+                    prepend-icon="mdi-delete-forever"
+                    block
+                    variant="outlined"
+                  >
+                    Reset All Progress
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
     </v-container>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useWordsStore } from '@/stores/useWordsStore';
-import { getLanguageDisplayName } from '@/utils/normalize';
 import { downloadCsv } from '@/utils/csv';
-import * as echarts from 'echarts';
-import type { ECharts } from 'echarts';
+import { saveQuizErrors, loadQuizErrors } from '@/utils/idb';
+import StarButton from '@/components/StarButton.vue';
 
 const wordsStore = useWordsStore();
 
 // Local state
 const loading = ref(false);
-const languageChart = ref<HTMLElement>();
-const progressChart = ref<HTMLElement>();
-let languageChartInstance: ECharts | null = null;
-let progressChartInstance: ECharts | null = null;
+const todaysQuizErrors = ref<Array<{
+  question: string;
+  correctAnswer: string;
+  userAnswer: string;
+  timestamp: string;
+}>>([]);
 
-// Computed
-const learningProgress = computed(() => {
-  if (wordsStore.totalWords === 0) return 0;
-  return Math.round((wordsStore.learnedWords / wordsStore.totalWords) * 100);
+// Simple computed properties
+const totalWords = computed(() => wordsStore.totalWords);
+
+const errorRate = computed(() => wordsStore.errorRate);
+
+const practicedToday = computed(() => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  return wordsStore.getAllItems().filter(word => {
+    if (!word.last_review) return false;
+    const reviewDate = new Date(word.last_review);
+    reviewDate.setHours(0, 0, 0, 0);
+    return reviewDate.getTime() === today.getTime();
+  }).length;
 });
 
-const detailedStats = computed(() => {
-  const languageStats: Record<string, {
-    total: number;
-    learned: number;
-    errors: number;
-    times: number;
-  }> = {};
-
-  wordsStore.getAllItems().forEach(word => {
-    if (!languageStats[word.lang_tgt]) {
-      languageStats[word.lang_tgt] = {
-        total: 0,
-        learned: 0,
-        errors: 0,
-        times: 0,
-      };
-    }
-
-    languageStats[word.lang_tgt].total++;
-    if (word.times > 0) languageStats[word.lang_tgt].learned++;
-    languageStats[word.lang_tgt].errors += word.errors;
-    languageStats[word.lang_tgt].times += word.times;
-  });
-
-  return Object.entries(languageStats).map(([language, stats]) => ({
-    language,
-    total: stats.total,
-    learned: stats.learned,
-    progress: stats.total > 0 ? Math.round((stats.learned / stats.total) * 100) : 0,
-    errorRate: stats.times > 0 ? Math.round((stats.errors / stats.times) * 100) : 0,
-    avgAttempts: stats.times > 0 ? Math.round(stats.times / stats.learned) : 0,
-  }));
+const masteredWords = computed(() => {
+  return wordsStore.getAllItems().filter(word => word.times >= 5 && word.errors === 0).length;
 });
-
-const statsHeaders = [
-  { title: 'Language', key: 'language', sortable: true },
-  { title: 'Total Words', key: 'total', sortable: true },
-  { title: 'Learned', key: 'learned', sortable: true },
-  { title: 'Progress', key: 'progress', sortable: true },
-  { title: 'Error Rate', key: 'errorRate', sortable: true },
-  { title: 'Avg Attempts', key: 'avgAttempts', sortable: true },
-];
 
 // Methods
-function getLanguageColor(language: string): string {
-  const colors = ['primary', 'success', 'warning', 'error', 'info', 'secondary'];
-  const index = language.charCodeAt(0) % colors.length;
-  return colors[index];
+function formatTime(timestamp: string): string {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function initCharts() {
-  nextTick(() => {
-    if (languageChart.value) {
-      languageChartInstance = echarts.init(languageChart.value);
-      updateLanguageChart();
-    }
-    
-    if (progressChart.value) {
-      progressChartInstance = echarts.init(progressChart.value);
-      updateProgressChart();
-    }
-  });
+function getWordStars(question: string, correctAnswer: string): number {
+  // Find the word item that matches this error
+  const wordItem = wordsStore.getAllItems().find(item => 
+    item.text_src === question && item.text_tgt === correctAnswer
+  );
+  return wordItem?.stars || 0;
 }
 
-function updateLanguageChart() {
-  if (!languageChartInstance) return;
-
-  const data = Object.entries(wordsStore.languageDistribution).map(([lang, count]) => ({
-    name: getLanguageDisplayName(lang),
-    value: count,
-  }));
-
-  const option = {
-    tooltip: {
-      trigger: 'item',
-      formatter: '{a} <br/>{b}: {c} ({d}%)',
-    },
-    legend: {
-      orient: 'vertical',
-      left: 'left',
-    },
-    series: [
-      {
-        name: 'Languages',
-        type: 'pie',
-        radius: '50%',
-        data,
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowOffsetX: 0,
-            shadowColor: 'rgba(0, 0, 0, 0.5)',
-          },
-        },
-      },
-    ],
-  };
-
-  languageChartInstance.setOption(option);
-}
-
-function updateProgressChart() {
-  if (!progressChartInstance) return;
-
-  // Generate mock progress data for the last 30 days
-  const progressData = [];
-  const today = new Date();
+function updateWordStars(question: string, correctAnswer: string, newStars: number): void {
+  // Find and update the word item that matches this error
+  const wordItem = wordsStore.getAllItems().find(item => 
+    item.text_src === question && item.text_tgt === correctAnswer
+  );
   
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    
-    // Mock data - in a real app, you'd track this over time
-    const learned = Math.floor(Math.random() * 5) + wordsStore.learnedWords - 15;
-    const errors = Math.floor(Math.random() * 3);
-    
-    progressData.push({
-      date: date.toISOString().split('T')[0],
-      learned: Math.max(0, learned),
-      errors,
-    });
+  if (wordItem) {
+    wordsStore.updateItem(wordItem.id, { stars: newStars });
+    console.log(`Updated stars for "${question} → ${correctAnswer}" to ${newStars}`);
+  } else {
+    console.warn(`Could not find word item for "${question} → ${correctAnswer}"`);
   }
-
-  const option = {
-    tooltip: {
-      trigger: 'axis',
-    },
-    legend: {
-      data: ['Words Learned', 'Errors'],
-    },
-    xAxis: {
-      type: 'category',
-      data: progressData.map(d => d.date),
-    },
-    yAxis: {
-      type: 'value',
-    },
-    series: [
-      {
-        name: 'Words Learned',
-        type: 'line',
-        data: progressData.map(d => d.learned),
-        smooth: true,
-      },
-      {
-        name: 'Errors',
-        type: 'line',
-        data: progressData.map(d => d.errors),
-        smooth: true,
-      },
-    ],
-  };
-
-  progressChartInstance.setOption(option);
 }
 
 function exportCsv() {
@@ -334,33 +261,101 @@ function exportCsv() {
   downloadCsv(csvContent, `words-${timestamp}.csv`);
 }
 
-function exportStats() {
-  const statsData = detailedStats.value.map(stat => ({
-    language: stat.language,
-    language_name: getLanguageDisplayName(stat.language),
-    total_words: stat.total,
-    learned_words: stat.learned,
-    progress_percentage: stat.progress,
-    error_rate: stat.errorRate,
-    average_attempts: stat.avgAttempts,
-  }));
+function clearTodaysErrors() {
+  if (confirm('Clear today\'s quiz errors? This action cannot be undone.')) {
+    todaysQuizErrors.value = [];
+    saveQuizErrors([]);
+  }
+}
 
-  downloadCsv(JSON.stringify(statsData, null, 2), `stats-${new Date().toISOString().split('T')[0]}.json`);
+async function refreshStats() {
+  // Show loading state and reload the data
+  loading.value = true;
+  await loadTodaysErrors();
+  loading.value = false;
+}
+
+function clearAllProgress() {
+  if (confirm('Are you sure you want to reset all learning progress? This action cannot be undone.')) {
+    wordsStore.getAllItems().forEach(word => {
+      wordsStore.updateItem(word.id, {
+        times: 0,
+        errors: 0,
+        spell_errors: 0,
+        last_review: '',
+      });
+    });
+  }
+}
+
+async function loadTodaysErrors() {
+  try {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const allErrors = await loadQuizErrors();
+    
+    // Filter errors from today and sort by timestamp (newest first)
+    const todaysErrors = allErrors.filter(error => 
+      error.timestamp.startsWith(today)
+    ).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    
+    todaysQuizErrors.value = todaysErrors;
+    console.log(`Loaded ${todaysErrors.length} quiz errors for today`);
+  } catch (error) {
+    console.error('Failed to load quiz errors:', error);
+    todaysQuizErrors.value = [];
+  }
+}
+
+// Auto-refresh todays errors periodically
+let refreshInterval: number | null = null;
+
+// Set up page visibility change listener to refresh when user returns to tab
+function handleVisibilityChange() {
+  if (!document.hidden) {
+    // User returned to the tab, refresh the errors
+    loadTodaysErrors();
+  }
+}
+
+// Listen for storage changes (when data is updated in another tab/window)
+function handleStorageChange(event: StorageEvent) {
+  if (event.key === 'polyglot_quiz_errors' || event.key === null) {
+    // Quiz errors were updated, refresh our data
+    loadTodaysErrors();
+  }
 }
 
 // Lifecycle
 onMounted(async () => {
   loading.value = true;
   await wordsStore.restore();
-  initCharts();
+  await loadTodaysErrors();
   loading.value = false;
+  
+  // Set up auto-refresh every 10 seconds
+  refreshInterval = window.setInterval(() => {
+    loadTodaysErrors();
+  }, 10000);
+  
+  // Listen for page visibility changes
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  
+  // Listen for window focus to refresh when user switches back
+  window.addEventListener('focus', loadTodaysErrors);
+  
+  // Listen for storage changes (IndexedDB updates from other tabs)
+  window.addEventListener('storage', handleStorageChange);
 });
 
-// Watch for data changes
-watch(() => wordsStore.rows, () => {
-  updateLanguageChart();
-  updateProgressChart();
-}, { deep: true });
+// Cleanup on unmount
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+  }
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  window.removeEventListener('focus', loadTodaysErrors);
+  window.removeEventListener('storage', handleStorageChange);
+});
 </script>
 
 <style scoped>
@@ -369,9 +364,41 @@ watch(() => wordsStore.rows, () => {
   max-width: none;
   padding: 16px;
   margin: 0 auto;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
 }
 
-/* Responsive design for wide screens */
+/* Stats Cards */
+.stats-card {
+  transition: all 0.3s ease;
+  border-radius: 16px;
+  overflow: hidden;
+  background: white;
+}
+
+.stats-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* Error items */
+.error-item {
+  border-left: 4px solid #f44336;
+  margin-bottom: 8px;
+  border-radius: 0 8px 8px 0;
+}
+
+.error-item:hover {
+  background-color: rgba(244, 67, 54, 0.04);
+}
+
+/* Star button and timestamp alignment */
+.error-item .v-list-item__append {
+  align-items: center;
+  gap: 8px;
+}
+
+/* Responsive design */
 @media (min-width: 1400px) {
   .stats-view-container {
     padding: 24px 48px;
@@ -388,5 +415,18 @@ watch(() => wordsStore.rows, () => {
   .stats-view-container {
     padding: 8px;
   }
+  
+  .stats-card .v-card-text {
+    padding: 20px !important;
+  }
+}
+
+/* Button hover effects */
+.v-btn {
+  transition: all 0.3s ease;
+}
+
+.v-btn:hover {
+  transform: translateY(-1px);
 }
 </style>

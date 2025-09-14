@@ -163,6 +163,7 @@ async function addWord() {
       last_review: '',
       spell_errors: 0,
       notes: formData.value.notes.trim() || undefined,
+      stars: 0,
     };
     
     wordsStore.addItem(newWord);

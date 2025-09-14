@@ -5,6 +5,7 @@ export interface WordRow {
   id: string;
   words: Record<string, string>; // language -> text mapping (e.g., { "en": "hello", "fr": "bonjour" })
   times: number;
+  learned: number; // Number of times the word has been learned successfully
   errors: number;
   last_review?: string; // ISO string or empty
   spell_errors: number;
@@ -42,6 +43,7 @@ export interface RawWordData {
   id: string;
   [key: string]: string; // word_{language} columns
   times: string;
+  learned: string;
   errors: string;
   last_review: string;
   spell_errors: string;
@@ -72,6 +74,7 @@ export interface LanguageMapping {
 export interface GroupedWord {
   id: string;
   wordRow: WordRow;
+  learned: number;
   errors: number;
   last_review?: string;
   notes?: string;
@@ -133,12 +136,24 @@ export interface GoogleTtsConfig {
 export type WebVoices = Record<string, string>; // lang -> voiceId
 
 /**
+ * Quiz configuration interface
+ */
+export interface QuizConfig {
+  questionLanguage: string;
+  answerLanguage: string;
+  quizNumber: number;
+  quizOrder: 'random' | 'lastreview' | 'errors' | 'stars';
+  quizType: 'word_meaning' | 'sound_meaning' | 'spelling';
+}
+
+/**
  * Settings store state
  */
 export interface SettingsState {
   ttsProvider: TtsProvider;
   webVoices: WebVoices;
   google: GoogleTtsConfig;
+  lastQuizConfig?: QuizConfig;
 }
 
 /**

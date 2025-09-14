@@ -6,6 +6,7 @@ A modern language learning application built with Vue 3, Vuetify 3, and TypeScri
 
 ### 📚 Word Management
 - **CSV Import/Export**: Import word lists from CSV files or export your progress
+- **Example CSV Download**: Download a sample CSV file to get started quickly
 - **Multi-language Support**: Support for 20+ languages with BCP-47 language codes
 - **Smart Import**: Automatically creates all language combinations from multi-language CSV
 - **Inline Editing**: Edit notes directly in the word list
@@ -17,7 +18,20 @@ A modern language learning application built with Vue 3, Vuetify 3, and TypeScri
 ### 🎯 Learning Modes
 - **List View**: Browse and manage your vocabulary with advanced filtering
 - **Flash Cards**: Study with flexible card modes and language selection
-- **Quiz Mode**: Test your knowledge with interactive quizzes
+  - **Single Card Mode**: Click or press right arrow to play sound, flip card, wait 1 second, then auto-advance
+  - **Multiple Card Mode**: Study multiple cards at once
+  - **Star Rating**: Click stars to rate words from 0-5 with instant state updates
+  - **Compact Design**: Smaller card width with larger text for better focus
+- **Quiz Mode**: Comprehensive quiz system with multiple question types and configurations
+  - **Language Selection**: Choose question and answer languages (including "All" option)
+  - **Quiz Types**: Word meaning, sound-to-meaning, and spelling quizzes
+  - **Question Count**: 10, 15, 20, 25, or 50 questions per quiz
+  - **Ordering Options**: Random, by last review, by error count, or by stars
+  - **Visual Feedback**: Check/cross indicators with color-coded answers
+  - **Audio Integration**: Play question and answer audio with TTS
+  - **Skip Functionality**: Skip questions with error tracking
+  - **Auto-advance**: 5-second delay or space key to continue
+  - **Results Summary**: Detailed quiz completion statistics
 - **Statistics**: Track your learning progress with detailed analytics
 
 ### 🔊 Text-to-Speech
@@ -85,7 +99,8 @@ npm run build
 2. **CSV Import**: Click "Import CSV" and select your file
    - **New Format**: Choose source and target languages from detected columns
    - **Legacy Format**: Automatically imported with existing language settings
-3. **Bulk Import**: Import large word lists from CSV files
+3. **Example CSV**: Click "Download Example" to get a sample CSV file with 50 common words in 4 languages
+4. **Bulk Import**: Import large word lists from CSV files
 
 #### Import Process
 
@@ -123,12 +138,24 @@ The CardView offers flexible study modes with simplified, distraction-free cards
   - Previous/Next navigation buttons
   - Keyboard arrow key support (← →)
   - Card counter display
+  - **Large text size** for better readability
+  - **Full card height** (300px) for optimal viewing
 - **Multiple Card Mode**: Study multiple cards simultaneously
-  - Choose 2, 4, 6, or 8 cards per page
+  - Choose 5, 10, 15, or 20 cards per page (default: 15)
   - All cards flip independently
+  - **Compact design** with smaller height (200px) and text size
+  - **Responsive grid layout** that adapts to screen size
+  - **Auto-flip-back**: Click any card to play audio, flip to answer, wait 2 seconds, then flip back to front
+  - **Group Navigation**: Previous/Next group buttons to navigate through pages of cards
+  - **Keyboard Support**: Use arrow keys (← →) to navigate between groups
+  - **Group Counter**: Shows current group and total groups (e.g., "Group 2 of 5")
 
 #### **Interactive Features**
 - **Click to Play & Flip**: Click any card to hear the front language and flip to back
+- **Multiple Card Auto-Flip**: In multiple card mode, cards automatically flip back to front after 2 seconds
+- **Single Card Navigation**: Use arrow keys or buttons to navigate between cards
+- **Multiple Card Group Navigation**: Use arrow keys or buttons to navigate between groups of cards
+- **Space Key Support**: Press space to play audio and flip cards (single card mode only)
 - **Notes Display**: Notes appear on the back of cards when available
 - **Shuffle Function**: Randomize card order anytime
 - **Smooth Animations**: 3D flip effect with hover scaling
@@ -146,15 +173,16 @@ The application supports two CSV formats:
 Use language-specific columns for maximum flexibility:
 
 ```csv
-id,word_en,word_fr,word_zh,word_ja,times,errors,last_review,spell_errors,notes
-1,hello,bonjour,你好,こんにちは,0,0,,0,
-2,thank you,merci,谢谢,ありがとう,0,0,,0,
+id,word_en,word_fr,word_zh,word_ja,times,learned,errors,last_review,spell_errors,notes,stars
+1,hello,bonjour,你好,こんにちは,0,0,0,,0,,
+2,thank you,merci,谢谢,ありがとう,0,0,0,,0,,
 ```
 
 **Columns:**
 - `id`: Unique identifier (auto-generated if not provided)
 - `word_{language}`: Text in specific language (e.g., `word_en`, `word_fr`, `word_zh`)
 - `times`: Number of correct attempts
+- `learned`: Number of successful learning attempts
 - `errors`: Number of incorrect attempts
 - `last_review`: Last review date (ISO string)
 - `spell_errors`: Number of spelling errors
@@ -326,6 +354,82 @@ For issues and questions:
 3. Include browser version and error messages
 
 ## Changelog
+
+### v1.1.2 - Quiz Configuration Memory
+- **NEW**: Quiz configuration is now automatically remembered between sessions
+- **NEW**: Last quiz settings (language selection, quiz type, question count, ordering) are preserved
+- **ENHANCED**: When opening quiz configuration, your last settings are automatically loaded
+- **IMPROVED**: Better user experience - no need to reconfigure quiz settings every time
+- **ENHANCED**: Settings are stored in IndexedDB and persist across browser sessions
+
+### v1.1.1 - Spelling Quiz Redesign
+- **FIXED**: Spelling quiz now shows correct question text (source language) instead of answer text
+- **FIXED**: Text input field now works properly with autofocus and proper event handling
+- **REMOVED**: Check Spelling button - answers are now checked automatically on Enter key
+- **FIXED**: Space key no longer triggers TTS for wrong words during spelling quiz
+- **NEW**: Dedicated SpellingQuiz component with cleaner, more focused design
+- **IMPROVED**: Better keyboard handling to prevent TTS interference during typing
+- **ENHANCED**: Spelling quiz now follows the same template pattern as choice quizzes
+- **IMPROVED**: More intuitive user experience with immediate answer validation
+
+### v1.1.0 - Complete Quiz System Redesign
+- **MAJOR**: Completely redesigned quiz system with comprehensive features
+- **NEW**: Quiz configuration dialog with language selection (including "All" option)
+- **NEW**: Multiple quiz types: Word meaning, sound-to-meaning, and spelling
+- **NEW**: Flexible question counts: 10, 15, 20, 25, or 50 questions per quiz
+- **NEW**: Advanced ordering options: Random, by last review, by error count, or by stars
+- **NEW**: Visual feedback system with check/cross indicators and color-coded answers
+- **NEW**: Audio integration with TTS for question and answer playback
+- **NEW**: Skip functionality with proper error tracking
+- **NEW**: Auto-advance with 5-second delay or space key navigation
+- **NEW**: Comprehensive results summary with detailed statistics
+- **NEW**: Character-by-character spelling validation with color feedback
+- **NEW**: Star rating functionality during quiz sessions
+- **ENHANCED**: Proper learned and error count tracking in word store
+- **IMPROVED**: Better user experience with intuitive quiz flow
+- **ENHANCED**: Support for "All" languages in both question and answer selection
+- **IMPROVED**: Smart answer option generation that avoids same-language pairs
+
+### v1.0.9
+- **NEW**: Added "learned" column to track successful learning attempts
+- **NEW**: Learned column appears in List view table between Stars and Errors columns
+- **NEW**: Sort by learned count functionality (most/least learned first)
+- **NEW**: CSV import/export support for learned column
+- **ENHANCED**: All new words default to 0 learned count
+- **IMPROVED**: Better progress tracking with separate learned and error counters
+- **ENHANCED**: Updated TypeScript types to include learned field
+
+### v1.0.8
+- **NEW**: Added "Download Example" button in List view for easy CSV template access
+- **NEW**: Example CSV file with 50 common words in 4 languages (English, French, Chinese, Japanese)
+- **ENHANCED**: Users can now quickly get started by downloading the example CSV file
+- **IMPROVED**: Better onboarding experience for new users
+- **ENHANCED**: Example file includes proper CSV format with all required columns
+
+### v1.0.7
+- **NEW**: Group navigation for multiple card mode
+- **NEW**: Previous/Next group buttons to navigate through pages of cards
+- **NEW**: Keyboard arrow key support (← →) for group navigation in multiple card mode
+- **NEW**: Group counter display showing current group and total groups
+- **ENHANCED**: Better navigation experience for large word sets in multiple card mode
+- **IMPROVED**: More intuitive study flow with clear group boundaries
+- **ENHANCED**: Updated UI instructions to show group navigation shortcuts
+
+### v1.0.6
+- **NEW**: Auto-flip-back functionality for multiple card mode
+- **NEW**: Cards in multiple card mode now automatically flip back to front after 2 seconds
+- **ENHANCED**: Improved user experience with automatic card state management
+- **ENHANCED**: Better timeout management to prevent conflicts between different card interactions
+- **IMPROVED**: More intuitive study flow for multiple card review sessions
+
+### v1.0.5
+- **NEW**: Different card styles for single and multiple card modes
+- **NEW**: Single card mode features larger text (2.5rem) and full height (300px) for better focus
+- **NEW**: Multiple card mode features compact design with smaller text (1.5rem) and height (200px)
+- **NEW**: Default cards per page changed to 15 for multiple card mode
+- **ENHANCED**: Dynamic styling based on card mode with responsive design
+- **IMPROVED**: Better visual hierarchy and readability in both card modes
+- **ENHANCED**: Card components now accept cardMode prop for flexible styling
 
 ### v1.0.4
 - **NEW**: Added comprehensive star rating system for vocabulary organization

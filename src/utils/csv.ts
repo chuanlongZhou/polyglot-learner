@@ -98,9 +98,10 @@ function validateAndConvertRowToWordRow(
   
   // Numeric fields with defaults
   const times = parseInt(row.times) || 0;
+  const learned = parseInt(row.learned) || 0;
   const errors_count = parseInt(row.errors) || 0;
   const spellErrors = parseInt(row.spell_errors) || 0;
-  const stars = parseInt(row.stars) || 0;
+  const stars = isNaN(parseInt(row.stars)) ? 0 : parseInt(row.stars);
   
   // Date field
   const lastReview = row.last_review?.trim() || undefined;
@@ -138,6 +139,7 @@ function validateAndConvertRowToWordRow(
     id,
     words,
     times,
+    learned,
     errors: errors_count,
     last_review: lastReview,
     spell_errors: spellErrors,
@@ -211,9 +213,10 @@ function validateAndConvertRowMultiLanguage(
   
   // Numeric fields with defaults
   const times = parseInt(row.times) || 0;
+  const learned = parseInt(row.learned) || 0;
   const errors_count = parseInt(row.errors) || 0;
   const spellErrors = parseInt(row.spell_errors) || 0;
-  const stars = parseInt(row.stars) || 0;
+  const stars = isNaN(parseInt(row.stars)) ? 0 : parseInt(row.stars);
   
   // Date field
   const lastReview = row.last_review?.trim() || undefined;
@@ -389,9 +392,10 @@ function validateAndConvertRowWithConfig(row: RawWordData, rowNumber: number, co
   
   // Numeric fields with defaults
   const times = parseInt(row.times) || 0;
+  const learned = parseInt(row.learned) || 0;
   const errors_count = parseInt(row.errors) || 0;
   const spellErrors = parseInt(row.spell_errors) || 0;
-  const stars = parseInt(row.stars) || 0;
+  const stars = isNaN(parseInt(row.stars)) ? 0 : parseInt(row.stars);
   
   // Date field
   const lastReview = row.last_review?.trim() || undefined;
@@ -449,9 +453,10 @@ function validateAndConvertRow(row: any, rowNumber: number): WordItem | null {
   
   // Numeric fields with defaults
   const times = parseInt(row.times) || 0;
+  const learned = parseInt(row.learned) || 0;
   const errors_count = parseInt(row.errors) || 0;
   const spellErrors = parseInt(row.spell_errors) || 0;
-  const stars = parseInt(row.stars) || 0;
+  const stars = isNaN(parseInt(row.stars)) ? 0 : parseInt(row.stars);
   
   // Date field
   const lastReview = row.last_review?.trim() || undefined;
@@ -492,6 +497,7 @@ export function convertWordsToCsv(words: WordItem[]): string {
     text_src: word.text_src,
     text_tgt: word.text_tgt,
     times: word.times,
+    learned: 0, // Default value for legacy format
     errors: word.errors,
     last_review: word.last_review || '',
     spell_errors: word.spell_errors,
@@ -550,6 +556,7 @@ export function generateLanguagePairs(
         last_review: row.last_review,
         spell_errors: row.spell_errors,
         notes: row.notes,
+        stars: row.stars,
       });
     }
   });
@@ -692,6 +699,7 @@ export function generateExampleCsvNewFormat(): string {
       word_fr: 'bonjour',
       word_zh: '你好',
       times: 0,
+      learned: 0,
       errors: 0,
       last_review: '',
       spell_errors: 0,
@@ -704,6 +712,7 @@ export function generateExampleCsvNewFormat(): string {
       word_fr: 'merci',
       word_zh: '谢谢',
       times: 0,
+      learned: 0,
       errors: 0,
       last_review: '',
       spell_errors: 0,
@@ -716,6 +725,7 @@ export function generateExampleCsvNewFormat(): string {
       word_fr: 'où',
       word_zh: '哪里',
       times: 0,
+      learned: 0,
       errors: 0,
       last_review: '',
       spell_errors: 0,
