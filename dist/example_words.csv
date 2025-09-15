@@ -1,5 +1,4 @@
-﻿id,word_en,word_fr,word_zh,word_ja,times,learned,errors,last_review,spell_errors,not
-.es,stars
+﻿id,word_en,word_fr,word_zh,word_ja,times,learned,errors,last_review,spell_errors,notes,stars
 1,hello,bonjour,你好,こんにちは,0,0,0,2025-09-11 20:00,0,,
 2,thank you,merci,谢谢,ありがとう,0,0,0,2025-09-11 20:00,0,,
 3,please,s'il vous plaît,请,お願いします,0,0,0,2025-09-12 08:00,0,,
